@@ -23,30 +23,23 @@ def seperate_data(dataset, time_step = 1):
 
 
 # 三个parametres
-# model：模型本身
+# model_path：模型路径
 # df_close：所有的close数据
 # scaler：把code中最新的scaler继承过来就行
 # days：需要预测的天数
-def stock_predict(model, df_close, scaler, days):
-    start = 0
-    end = 0
+def stock_predict(model_path, df_close, scaler, days):
+    model = keras.models.load_model(model_path)
 
     train_size = int(len(df_close) * 0.7)
-    test_size = len(df_close) - train_size
-    close_train = df_close[0:train_size]
     close_test = df_close[train_size:len(df_close), :1]
-    x_train, y_train = seperate_data(close_train, 100)
-    x_test, y_test = seperate_data(close_test, 100)
-    x_train = x_train.reshape(x_train.shape[0], x_train.shape[1], 1)
-    x_test = x_test.reshape(x_test.shape[0], x_test.shape[1], 1)
 
-    num_take = len(close_test) - 300
+    num_take = len(close_test) - 100
     x_input = close_test[num_take:].reshape(1, -1)
     temp_input = list(x_input)
     temp_input = temp_input[0].tolist()
 
     lst_output = []
-    n_steps = 300
+    n_steps = 100
     i = 0
     while (i < 60):
 
@@ -66,21 +59,9 @@ def stock_predict(model, df_close, scaler, days):
             lst_output.extend(yhat.tolist())
             i = i + 1
 
-    start = len(df_close) - 1000
-    end = start + days
-    day_new = np.arange(1, start)
-    day_pred = np.arange(start, end)
-
-    plt.plot(day_new, scaler.inverse_transform(df_close[1001:]))
-    plt.plot(day_pred, scaler.inverse_transform(lst_output[:days]))
-    plt.show()
-
     all_pred = scaler.inverse_transform(lst_output[:days])
-    pred_diff = all_pred[-1][0] - scaler.inverse_transform(df_close)[-1][0]
-    change_rate = pred_diff / (scaler.inverse_transform(df_close)[-1][0])
-    change_rate_str = str(round(change_rate * 100, 5)) + "%"
-    print("The change rate after " + str(days) + " days is: ", change_rate_str)
-    return change_rate_str
+
+    return all_pred
 
 def main():
     df = pdr.get_data_tiingo("MSFT", api_key="aeeaa9dbc8f82f2c361abaa259050d75e736b424")
@@ -119,7 +100,9 @@ def main():
 
     model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=100, batch_size=64, verbose=1)
 
-    change_r = stock_predict(model, df_close, scaler, 30)
+    change_r = stock_predict("/Users/peter/Machine_Learning_Practice/model", df_close, scaler, 30)
+
+    print(change_r)
 
 
 
