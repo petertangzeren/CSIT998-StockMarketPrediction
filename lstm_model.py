@@ -2,7 +2,6 @@ import os
 import pickle
 
 import numpy as np
-import pandas_datareader as pdr
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -74,6 +73,8 @@ def predict(model_path, prices, predicting_days=1):
 
 
 def main():
+    import pandas_datareader as pdr
+
     ticker = "MSFT"
     api_key = "aeeaa9dbc8f82f2c361abaa259050d75e736b424"
     price_history = pdr.get_data_tiingo(ticker, api_key=api_key)

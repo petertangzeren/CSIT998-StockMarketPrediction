@@ -13,10 +13,11 @@ from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.datasets import fashion_mnist
 from tensorflow.keras import losses
 
-def seperate_data(dataset, time_step = 1):
+
+def seperate_data(dataset, time_step=1):
     dataX, dataY = [], []
-    for i in range(len(dataset)-time_step-1):
-        a = dataset[i:(i+time_step), 0]
+    for i in range(len(dataset) - time_step - 1):
+        a = dataset[i : (i + time_step), 0]
         dataX.append(a)
         dataY.append(dataset[i + time_step, 0])
     return np.array(dataX), np.array(dataY)
@@ -31,7 +32,7 @@ def stock_predict(model_path, df_close, scaler, days):
     model = keras.models.load_model(model_path)
 
     train_size = int(len(df_close) * 0.7)
-    close_test = df_close[train_size:len(df_close), :1]
+    close_test = df_close[train_size : len(df_close), :1]
 
     num_take = len(close_test) - 100
     x_input = close_test[num_take:].reshape(1, -1)
@@ -41,9 +42,9 @@ def stock_predict(model_path, df_close, scaler, days):
     lst_output = []
     n_steps = 100
     i = 0
-    while (i < 60):
+    while i < 60:
 
-        if (len(temp_input) > n_steps):
+        if len(temp_input) > n_steps:
             x_input = np.array(temp_input[1:])
             x_input = x_input.reshape(1, -1)
             x_input = x_input.reshape((1, n_steps, 1))
@@ -63,6 +64,7 @@ def stock_predict(model_path, df_close, scaler, days):
 
     return all_pred
 
+
 def main():
     df = pdr.get_data_tiingo("MSFT", api_key="aeeaa9dbc8f82f2c361abaa259050d75e736b424")
     # df = pdr.get_data_tiingo("600958", api_key="aeeaa9dbc8f82f2c361abaa259050d75e736b424")
@@ -78,7 +80,7 @@ def main():
     train_size = int(len(df_close) * 0.7)
     test_size = len(df_close) - train_size
     close_train = df_close[0:train_size]
-    close_test = df_close[train_size:len(df_close), :1]
+    close_test = df_close[train_size : len(df_close), :1]
 
     x_train, y_train = seperate_data(close_train, 100)
     x_test, y_test = seperate_data(close_test, 100)
@@ -98,12 +100,20 @@ def main():
 
     model.compile(loss="mean_squared_error", optimizer="adam")
 
-    model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=100, batch_size=64, verbose=1)
+    model.fit(
+        x_train,
+        y_train,
+        validation_data=(x_test, y_test),
+        epochs=100,
+        batch_size=64,
+        verbose=1,
+    )
 
-    change_r = stock_predict("/Users/peter/Machine_Learning_Practice/model", df_close, scaler, 30)
+    change_r = stock_predict(
+        "/Users/peter/Machine_Learning_Practice/model", df_close, scaler, 30
+    )
 
     print(change_r)
-
 
 
 if __name__ == "__main__":
