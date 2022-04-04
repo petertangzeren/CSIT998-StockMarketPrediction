@@ -2,6 +2,7 @@ import os
 import pickle
 
 import numpy as np
+from keras import backend
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -16,6 +17,10 @@ def seperate_data(dataset, time_step=1):
         dataX.append(a)
         dataY.append(dataset[i + time_step])
     return np.array(dataX), np.array(dataY)
+
+
+def soft_acc(y_true, y_pred):
+    return backend.mean(backend.equal(backend.round(y_true), backend.round(y_pred)))
 
 
 def train(model_path, prices, shift=100):
@@ -34,7 +39,8 @@ def train(model_path, prices, shift=100):
     model.add(layers.LSTM(50, return_sequences=True))
     model.add(layers.LSTM(50))
     model.add(layers.Dense(1))
-    model.compile(loss="mean_squared_error", optimizer="adam")
+    model.compile(loss="binary_crossentropy", optimizer="adam", metrics=[soft_acc])
+    # model.compile(loss="mean_squared_error", optimizer="adam", metrics=[soft_acc])
 
     model.fit(
         x_train,
@@ -46,8 +52,8 @@ def train(model_path, prices, shift=100):
     )
     model.save(model_path)
     scaler_path = os.path.join(model_path, "scaler.pkl")
-    evaluation = model.evaluate(x_test, y_test)
-    print("test loss, test acc:", evaluation)
+    loss, acc = model.evaluate(x_test, y_test, verbose=0)
+    print("test loss, test acc:", loss, acc)
     with open(scaler_path, "wb") as f:
         pickle.dump(scaler, f)
 
@@ -63,7 +69,7 @@ def predict(model_path, prices, predicting_days=1):
     model = keras.models.load_model(model_path)
 
     prediction_series = []
-    for i in range(predicting_days):
+    for _ in range(predicting_days):
         x_input = x_input.reshape(1, -1)
         y_predict = model.predict(x_input)
         prediction_series.append(y_predict.ravel())
