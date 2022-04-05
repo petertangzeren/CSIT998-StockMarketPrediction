@@ -39,7 +39,7 @@ def train(model_path, prices, shift=100):
     model.add(layers.LSTM(50, return_sequences=True))
     model.add(layers.LSTM(50))
     model.add(layers.Dense(1))
-    model.compile(loss="binary_crossentropy", optimizer="adam", metrics=[soft_acc])
+    model.compile(loss="binary_crossentropy", optimizer="adam")
     # model.compile(loss="mean_squared_error", optimizer="adam", metrics=[soft_acc])
 
     model.fit(
@@ -52,8 +52,8 @@ def train(model_path, prices, shift=100):
     )
     model.save(model_path)
     scaler_path = os.path.join(model_path, "scaler.pkl")
-    loss, acc = model.evaluate(x_test, y_test, verbose=0)
-    print("test loss, test acc:", loss, acc)
+    loss_acc = model.evaluate(x_test, y_test, verbose=0)
+    print("test loss, test acc:", loss_acc)
     with open(scaler_path, "wb") as f:
         pickle.dump(scaler, f)
 
