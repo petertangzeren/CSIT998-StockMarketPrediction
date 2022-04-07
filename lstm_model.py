@@ -7,15 +7,16 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras import models
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 
-def seperate_data(dataset, time_step=1):
+def separate_data(dataset, time_step=1, predicting_steps_after=1):
     dataset = dataset.ravel()
     dataX, dataY = [], []
-    for i in range(len(dataset) - time_step):
+    for i in range(len(dataset) - time_step - predicting_steps_after + 1):
         a = dataset[i : (i + time_step)]
         dataX.append(a)
-        dataY.append(dataset[i + time_step])
+        dataY.append(dataset[i + time_step + predicting_steps_after - 1])
     return np.array(dataX), np.array(dataY)
 
 
@@ -23,11 +24,14 @@ def soft_acc(y_true, y_pred):
     return backend.mean(backend.equal(backend.round(y_true), backend.round(y_pred)))
 
 
-def train(model_path, prices, shift=100):
+def train(model_path, prices, shift=100, predicting_days=5):
+    if prices.empty:
+        return
     scaler = MinMaxScaler()
     scaled_prices = scaler.fit_transform(prices)
 
-    x_data, y_data = seperate_data(scaled_prices, shift)
+    x_data, y_data = separate_data(scaled_prices, shift, predicting_days)
+    # x_d = pad_sequences(scaled_prices.ravel(), maxlen=shift)
     test_size = int(len(x_data) * 0.3)
 
     x_test, x_train = x_data[:test_size], x_data[test_size:]
@@ -40,7 +44,7 @@ def train(model_path, prices, shift=100):
     model.add(layers.LSTM(50))
     model.add(layers.Dense(1))
     model.compile(loss="binary_crossentropy", optimizer="adam")
-    # model.compile(loss="mean_squared_error", optimizer="adam", metrics=[soft_acc])
+    # model.compile(loss="binary_crossentropy", optimizer="adam", metrics=[soft_acc])
 
     model.fit(
         x_train,
@@ -63,19 +67,15 @@ def predict(model_path, prices, predicting_days=1):
     with open(scaler_path, "rb") as f:
         scaler = pickle.load(f)
     scaled_prices = scaler.transform(prices)
-    x_data, _ = seperate_data(np.append(scaled_prices, [scaled_prices[-1]]), 100)
-    x_input = x_data[-1]
+    x_input = scaled_prices[-100:].T
 
     model = keras.models.load_model(model_path)
+    y_predict = model.predict(x_input)
+    future = scaler.inverse_transform(y_predict).ravel()[0]
+    daily_prediction = (1 + future) ** (1 / predicting_days) - 1
 
-    prediction_series = []
-    for _ in range(predicting_days):
-        x_input = x_input.reshape(1, -1)
-        y_predict = model.predict(x_input)
-        prediction_series.append(y_predict.ravel())
-        x_input = np.append(x_input[0][1:], [y_predict])
-    actual_prediction_series = scaler.inverse_transform(prediction_series)
-    return actual_prediction_series
+    prediction_series = [daily_prediction] * predicting_days
+    return np.array(prediction_series)
 
 
 def main():
