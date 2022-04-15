@@ -12,6 +12,7 @@ from tensorflow.keras import Input
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.datasets import fashion_mnist
 from tensorflow.keras import losses
+import transformer
 
 
 def seperate_data(dataset, time_step=1):
@@ -28,8 +29,8 @@ def seperate_data(dataset, time_step=1):
 # df_close：所有的close数据
 # scaler：把code中最新的scaler继承过来就行
 # days：需要预测的天数
-def stock_predict(model_path, df_close, scaler, days):
-    model = keras.models.load_model(model_path)
+def stock_predict(model, df_close, scaler, days):
+    # model = keras.models.load_model(model_path)
 
     train_size = int(len(df_close) * 0.7)
     close_test = df_close[train_size : len(df_close), :1]
@@ -89,17 +90,19 @@ def main():
     x_test = x_test.reshape(x_test.shape[0], x_test.shape[1], 1)
 
     # create the model
-    model = models.Sequential()
 
-    model.add(layers.LSTM(50, return_sequences=True, input_shape=(100, 1)))
-    model.add(layers.LSTM(50, return_sequences=True))
-    model.add(layers.LSTM(50))
-    model.add(layers.Dense(1))
+    # model = models.Sequential()
+    #
+    # model.add(layers.LSTM(50, return_sequences=True, input_shape=(100, 1)))
+    # model.add(layers.LSTM(50, return_sequences=True))
+    # model.add(layers.LSTM(50))
+    # model.add(layers.Dense(1))
+    #
+    # img_new = model.predict(x_test)
+    #
+    # model.compile(loss="mean_squared_error", optimizer="adam")
 
-    img_new = model.predict(x_test)
-
-    model.compile(loss="mean_squared_error", optimizer="adam")
-
+    model = transformer.create_model()
     model.fit(
         x_train,
         y_train,
@@ -109,8 +112,13 @@ def main():
         verbose=1,
     )
 
+    # change_r = stock_predict(
+    #     "D:\Projects\CSIT998-StockMarketPrediction\model", df_close, scaler, 30
+    # )
+
+
     change_r = stock_predict(
-        "/Users/peter/Machine_Learning_Practice/model", df_close, scaler, 30
+        model, df_close, scaler, 30
     )
 
     print(change_r)
