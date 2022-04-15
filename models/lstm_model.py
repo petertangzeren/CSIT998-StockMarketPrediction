@@ -4,6 +4,7 @@ import pickle
 import numpy as np
 from keras import backend
 from sklearn.preprocessing import MinMaxScaler
+import matplotlib.pyplot as plt
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras import models
@@ -32,7 +33,7 @@ def train(model_path, prices, shift=100, predicting_days=5):
 
     x_data, y_data = separate_data(scaled_prices, shift, predicting_days)
     # x_d = pad_sequences(scaled_prices.ravel(), maxlen=shift)
-    test_size = int(len(x_data) * 0.3)
+    test_size = int(len(x_data) * 0.2)
 
     x_test, x_train = x_data[:test_size], x_data[test_size:]
     y_test, y_train = y_data[:test_size], y_data[test_size:]
@@ -40,17 +41,21 @@ def train(model_path, prices, shift=100, predicting_days=5):
     model = models.Sequential()
 
     model.add(layers.LSTM(50, return_sequences=True, input_shape=(shift, 1)))
+    model.add(layers.Dropout(0.25))
     model.add(layers.LSTM(50, return_sequences=True))
     model.add(layers.LSTM(50))
     model.add(layers.Dense(1))
-    model.compile(loss="binary_crossentropy", optimizer="adam")
+    # binary_crossentropy
+    # categorical_crossentropy
+    model.compile(loss="mean_squared_error", optimizer="adam")
     # model.compile(loss="binary_crossentropy", optimizer="adam", metrics=[soft_acc])
+    print(model.summary())
 
-    model.fit(
+    training = model.fit(
         x_train,
         y_train,
-        validation_data=(x_test, y_test),
-        epochs=100,
+        validation_split=0.2,
+        epochs=10,
         batch_size=64,
         verbose=2,
     )
@@ -60,6 +65,9 @@ def train(model_path, prices, shift=100, predicting_days=5):
     print("test loss, test acc:", loss_acc)
     with open(scaler_path, "wb") as f:
         pickle.dump(scaler, f)
+    plt.plot(training.history["loss"])
+    plt.plot(training.history["val_loss"])
+    plt.show()
 
 
 def predict(model_path, prices, predicting_days=1):
