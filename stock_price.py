@@ -101,21 +101,20 @@ def main():
     # img_new = model.predict(x_test)
     #
     # model.compile(loss="mean_squared_error", optimizer="adam")
-
-    model = transformer.create_model()
-    model.fit(
-        x_train,
-        y_train,
-        validation_data=(x_test, y_test),
-        epochs=100,
-        batch_size=64,
-        verbose=1,
-    )
+    #
+    # model = transformer.create_model()
+    # model.fit(
+    #     x_train,
+    #     y_train,
+    #     validation_data=(x_test, y_test),
+    #     epochs=100,
+    #     batch_size=64,
+    #     verbose=1,
+    # )
 
     # change_r = stock_predict(
     #     "D:\Projects\CSIT998-StockMarketPrediction\model", df_close, scaler, 30
     # )
-
 
     change_r = stock_predict(
         model, df_close, scaler, 30
