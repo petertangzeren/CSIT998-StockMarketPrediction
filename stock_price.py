@@ -116,9 +116,7 @@ def main():
     #     "D:\Projects\CSIT998-StockMarketPrediction\model", df_close, scaler, 30
     # )
 
-    change_r = stock_predict(
-        model, df_close, scaler, 30
-    )
+    change_r = stock_predict(model, df_close, scaler, 30)
 
     print(change_r)
 

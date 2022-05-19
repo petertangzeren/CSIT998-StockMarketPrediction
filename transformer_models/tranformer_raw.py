@@ -9,13 +9,15 @@ from tensorflow.keras.layers import *
 
 from transformer_models.transformer_class import create_model
 
-print('Tensorflow version: {}'.format(tf.__version__))
+print("Tensorflow version: {}".format(tf.__version__))
 
 import matplotlib.pyplot as plt
-plt.style.use('seaborn')
+
+plt.style.use("seaborn")
 
 import warnings
-warnings.filterwarnings('ignore')
+
+warnings.filterwarnings("ignore")
 
 batch_size = 32
 seq_len = 100
@@ -38,11 +40,11 @@ def train(df):
     # Normalise (Can be changed to use pct_change way to normalise by Cai)
     scaler_1 = MinMaxScaler(feature_range=(0, 1))
     df = scaler_1.fit_transform(np.array(df).reshape(-1, 1))
-    df = pd.DataFrame(df, columns=['Close'])
+    df = pd.DataFrame(df, columns=["Close"])
 
     # Drop all 0 rows
     df.replace(0, np.nan, inplace=True)
-    df.dropna(how='any', axis=0, inplace=True)
+    df.dropna(how="any", axis=0, inplace=True)
     # df.reset_index(inplace=True)
 
     # Split dataset to training (80%), validation(10%) and testing(10%)
@@ -58,29 +60,35 @@ def train(df):
     # Split all datasets into chunks for further model training (Chunk length 100)
     # Training data
     X_train, y_train = [], []
-    for i in range(seq_len, len(train_data)-predict_days):
-        X_train.append(train_data[i - seq_len:i])
-        y_train.append(train_data[:, 0][i+predict_days])
+    for i in range(seq_len, len(train_data) - predict_days):
+        X_train.append(train_data[i - seq_len : i])
+        y_train.append(train_data[:, 0][i + predict_days])
     X_train, y_train = np.array(X_train), np.array(y_train)
 
     # Validation data
     X_val, y_val = [], []
-    for i in range(seq_len, len(val_data)-predict_days):
-        X_val.append(val_data[i - seq_len:i])
-        y_val.append(val_data[:, 0][i+predict_days])
+    for i in range(seq_len, len(val_data) - predict_days):
+        X_val.append(val_data[i - seq_len : i])
+        y_val.append(val_data[:, 0][i + predict_days])
     X_val, y_val = np.array(X_val), np.array(y_val)
 
     # Test data
     X_test, y_test = [], []
-    for i in range(seq_len, len(test_data)-predict_days):
-        X_test.append(test_data[i - seq_len:i])
-        y_test.append(test_data[:, 0][i+predict_days])
+    for i in range(seq_len, len(test_data) - predict_days):
+        X_test.append(test_data[i - seq_len : i])
+        y_test.append(test_data[:, 0][i + predict_days])
     X_test, y_test = np.array(X_test), np.array(y_test)
 
     # Create a transformer model
     model = create_model()
     model.summary()
-    model.fit(X_train, y_train, batch_size=batch_size, epochs=35, validation_data=(X_val, y_val))
+    model.fit(
+        X_train,
+        y_train,
+        batch_size=batch_size,
+        epochs=35,
+        validation_data=(X_val, y_val),
+    )
 
     return model, scaler_1
 
@@ -125,14 +133,13 @@ def predict(model, df_close, scaler, days):
 def main():
     df = pdr.get_data_tiingo("MSFT", api_key="aeeaa9dbc8f82f2c361abaa259050d75e736b424")
     df.to_csv("MSFT.csv")
-    df = pd.read_csv("MSFT.csv", delimiter=',', usecols=['date', 'close'])
-    df.sort_values('date', inplace=True)
+    df = pd.read_csv("MSFT.csv", delimiter=",", usecols=["date", "close"])
+    df.sort_values("date", inplace=True)
     df = df["close"]
 
     model, scaler = train(df)
     pred_values = predict(model, df, scaler, 30)
     print(pred_values)
-
 
 
 if __name__ == "__main__":
