@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 batch_size = 32
-seq_len = 100
+seq_len = 128
 
 d_k = 256
 d_v = 256
@@ -121,8 +121,6 @@ class SingleAttention(Layer):
         attn_out = tf.matmul(attn_weights, v)
         return attn_out
 
-    #############################################################################
-
 
 class MultiAttention(Layer):
     def __init__(self, d_k, d_v, n_heads):
@@ -136,7 +134,7 @@ class MultiAttention(Layer):
         for n in range(self.n_heads):
             self.attn_heads.append(SingleAttention(self.d_k, self.d_v))
 
-            # input_shape[0]=(batch, seq_len, 7), input_shape[0][-1]=7
+        # input_shape[0]=(batch, seq_len, 7), input_shape[0][-1]=7
         self.linear = Dense(
             input_shape[0][-1],
             input_shape=input_shape,
@@ -149,8 +147,6 @@ class MultiAttention(Layer):
         concat_attn = tf.concat(attn, axis=-1)
         multi_linear = self.linear(concat_attn)
         return multi_linear
-
-    #############################################################################
 
 
 class TransformerEncoder(Layer):
@@ -208,7 +204,7 @@ def create_model():
     attn_layer3 = TransformerEncoder(d_k, d_v, n_heads, ff_dim)
 
     """Construct model"""
-    in_seq = Input(shape=(seq_len, 1))
+    in_seq = Input(shape=(seq_len, 1))  # Can also change to multivariate
     x = time_embedding(in_seq)
     x = Concatenate(axis=-1)([in_seq, x])
     x = attn_layer1((x, x, x))
